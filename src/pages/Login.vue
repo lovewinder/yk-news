@@ -7,7 +7,12 @@
       <i class="iconfont iconnew"></i>
     </div>
     <div class="username">
-      <yk-input placeholder="请输入用户名" v-model="username" :rules="/^1\d{4,10}$/" err-msg="输入的用户名格式错误"></yk-input>
+      <yk-input
+        placeholder="用户名/手机号码"
+        v-model="username"
+        :rules="/^1\d{4,10}$/"
+        err-msg="输入的用户名格式错误"
+      ></yk-input>
     </div>
     <div class="password">
       <yk-input
@@ -21,11 +26,14 @@
     <div class="login-btn">
       <yk-button @click="login">登录</yk-button>
     </div>
+    <div class="go-register">
+      没有账号? 立即
+      <router-link to="/register">注册</router-link>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 export default {
   data () {
     return {
@@ -33,21 +41,29 @@ export default {
       password: ''
     }
   },
+  created () {
+    const { username, password } = this.$route.params
+    this.username = username
+    this.password = password
+  },
   methods: {
     async login () {
       if (!this.username || !this.password) {
         return
       }
-      const res = await axios.post('http://localhost:3000/login', {
+      const res = await this.$axios.post('/login', {
         username: this.username,
         password: this.password
       })
-      console.log(res)
       if (res.data.statusCode === 401) {
         // 全局注册时,会在Vue原型上添加一个$toast
         this.$toast.fail('用户名或密码错误')
       } else if (res.data.statusCode === 200) {
-        this.$toast.loading('登录成功')
+        this.$toast.success('登录成功')
+        const { token, user } = res.data.data
+        localStorage.setItem('token', token)
+        localStorage.setItem('user_id', user.id)
+        this.$router.push('/profile')
       }
     }
   }
@@ -71,6 +87,13 @@ export default {
   }
   .login-btn {
     margin-top: 20px;
+  }
+  .go-register {
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    font-size: 18px;
+    margin-top: 10px;
   }
 }
 </style>
